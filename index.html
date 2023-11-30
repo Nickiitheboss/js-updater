@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Updater</title>
+</head>
+<body>
+    <h1>JS Updater</h1>
+
+    <label for="mp4Links">Paste MP4 Links:</label>
+    <textarea id="mp4Links" rows="5" cols="50"></textarea>
+
+    <br>
+
+    <label for="jpgLinks">Paste JPG Links:</label>
+    <textarea id="jpgLinks" rows="5" cols="50"></textarea>
+
+    <br>
+
+    <button onclick="updateScript()">Update Script</button>
+
+    <br>
+
+    <h2>Updated Script:</h2>
+    <textarea id="updatedScript" rows="15" cols="80" readonly></textarea>
+
+    <br>
+
+    <button onclick="copyScript()">Copy Script</button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Load the original script from the server
+            fetch('update/script.txt')
+                .then(response => response.text())
+                .then(script => document.getElementById('updatedScript').value = script);
+        });
+
+        function updateScript() {
+            var mp4Links = document.getElementById('mp4Links').value.split('\n').map(link => link.trim());
+            var jpgLinks = document.getElementById('jpgLinks').value.split('\n').map(link => link.trim());
+
+            fetch('update/script.txt')
+                .then(response => response.text())
+                .then(originalScript => {
+                    var updatedScript = modifyScript(originalScript, mp4Links, jpgLinks);
+                    document.getElementById('updatedScript').value = updatedScript;
+                });
+        }
+
+        function modifyScript(originalScript, mp4Links, jpgLinks) {
+            // Replace the original arrays with the new links
+            var modifiedScript = originalScript.replace(/var videoArray = \[([\s\S]*?)\]/, function (match, p1) {
+                var updatedLinks = mp4Links.map(link => `    "${link}"`).join(',\n');
+                return `var videoArray = [\n${updatedLinks}\n]`;
+            });
+
+            modifiedScript = modifiedScript.replace(/var imageArray = \[([\s\S]*?)\]/, function (match, p1) {
+                var updatedLinks = jpgLinks.map(link => `    "${link}"`).join(',\n');
+                return `var imageArray = [\n${updatedLinks}\n]`;
+            });
+
+            return modifiedScript;
+        }
+
+        function copyScript() {
+            var updatedScript = document.getElementById('updatedScript');
+            updatedScript.select();
+            document.execCommand('copy');
+            alert("Script copied to clipboard!");
+        }
+    </script>
+</body>
+</html>
